@@ -14,6 +14,7 @@ DELTA = {
 }
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     """
     引数:こうかとんRectまたは爆弾Rect
@@ -68,13 +69,13 @@ def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
     戻り値:爆弾Surfaceのリスト,加速度のリスト
     """
     bb_imgs = []
-    for r in range(1, 11):#10段階の爆弾
+    for r in range(1, 11): # 10段階の爆弾
         bb_img = pg.Surface((20*r, 20*r))
         bb_img.set_colorkey((0, 0, 0))
         pg.draw.circle(bb_img, (255, 0, 0), (10*r, 10*r), 10*r)
         bb_imgs.append(bb_img)
 
-        bb_accs = [a for a in range(1, 11)]#加速度リスト
+        bb_accs = [a for a in range(1, 11)] # 加速度リスト
         return bb_imgs, bb_accs
 
 def main():
@@ -138,7 +139,7 @@ def main():
 
         bb_rct.move_ip(vx, vy)
         
-        yoko, tate = check_bound(bb_rct)
+        yoko, tate = check_bound(bb_rct) # 爆弾が画面内か判定（True:画面内/False:画面外）
         if not yoko:
             vx *= -1
         if bb_rct.left < 0:
