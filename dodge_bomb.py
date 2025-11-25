@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+import time
 import pygame as pg
 
 
@@ -27,10 +28,44 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
         tate = False
     return yoko,tate
 
+def gameover(screen: pg.Surface) -> None:
+    """ゲームオーバー画面を表示する関数
+    引数：スクリーンSurface
+    戻り値：None
+    ブラックアウト,泣いているこうかとん,Game Over文字を5秒間表示
+    """
+    # ブラックアウト用の半透明Surface作成
+    blackout = pg.Surface((WIDTH, HEIGHT))
+    pg.draw.rect(blackout, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
+    blackout.set_alpha(200)  # 透明度設定
+    
+    # Game Overテキスト作成
+    fonto = pg.font.Font(None, 80)
+    txt = fonto.render("Game Over", True, (255, 255, 255))
+    txt_rct = txt.get_rect()
+    txt_rct.center = WIDTH // 2, HEIGHT // 2
+    
+    # 泣いているこうかとん画像（8.pngを使用）
+    cry_img = pg.transform.rotozoom(pg.image.load("fig/8.png"), 0, 0.9)
+    cry_rct = cry_img.get_rect()
+    cry_rct.center = WIDTH // 2 - 200, HEIGHT // 2
+    
+    cry_rct2 = cry_img.get_rect()
+    cry_rct2.center = WIDTH // 2 + 200, HEIGHT // 2
+    
+    # 描画
+    screen.blit(blackout, (0, 0))
+    screen.blit(txt, txt_rct)
+    screen.blit(cry_img, cry_rct)
+    screen.blit(cry_img, cry_rct2)
+    pg.display.update()
+    time.sleep(5)
+
 
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
+    screen_rct = screen.get_rect() #screen_rctを定義
     bg_img = pg.image.load("fig/pg_bg.jpg")    
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
     kk_rct = kk_img.get_rect()
@@ -48,10 +83,6 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
-        
-        if kk_rct.colliderect(bb_rct):
-            print("ゲームオーバー")
-            return
         
         screen.blit(bg_img, [0, 0]) 
 
@@ -80,6 +111,11 @@ def main():
             vy *= -1
         bb_rct.move_ip(vx,vy)
         screen.blit(bb_img, bb_rct)
+
+        if kk_rct.colliderect(bb_rct):
+            gameover(screen)  # ゲームオーバー画面表示（機能1）
+            return
+ 
         pg.display.update()
         tmr += 1
         clock.tick(50)
