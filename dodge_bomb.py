@@ -14,7 +14,6 @@ DELTA = {
 }
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     """
     引数:こうかとんRectまたは爆弾Rect
@@ -29,7 +28,8 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     return yoko,tate
 
 def gameover(screen: pg.Surface) -> None:
-    """ゲームオーバー画面を表示する関数
+    """
+    ゲームオーバー画面を表示する関数
     引数：スクリーンSurface
     戻り値：None
     ブラックアウト,泣いているこうかとん,Game Over文字を5秒間表示
@@ -61,6 +61,21 @@ def gameover(screen: pg.Surface) -> None:
     pg.display.update()
     time.sleep(5)
 
+def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
+    """
+    大きさの異なる爆弾Surfaceのリストと加速度のリスト
+    引数:なし
+    戻り値:爆弾Surfaceのリスト,加速度のリスト
+    """
+    bb_imgs = []
+    for r in range(1, 11):#10段階の爆弾
+        bb_img = pg.Surface((20*r, 20*r))
+        bb_img.set_colorkey((0, 0, 0))
+        pg.draw.circle(bb_img, (255, 0, 0), (10*r, 10*r), 10*r)
+        bb_imgs.append(bb_img)
+
+        bb_accs = [a for a in range(1, 11)]#加速度リスト
+        return bb_imgs, bb_accs
 
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
@@ -70,6 +85,7 @@ def main():
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
+
     bb_img= pg.Surface((20, 20))
     pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
     bb_img.set_colorkey((0, 0, 0))
@@ -77,8 +93,12 @@ def main():
     bb_rct.centerx = random.randint(0,WIDTH)
     bb_rct.centery = random.randint(0,HEIGHT)
     vx,vy = +5, +5
+
+    bb_imgs, bb_accs = init_bb_imgs()
+
     clock = pg.time.Clock()
     tmr = 0
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
@@ -88,6 +108,10 @@ def main():
 
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
+        for key, mv in DELTA.items():
+            if key_lst[key]:
+                sum_mv[0] += mv[0]
+                sum_mv[1] += mv[1]
         # if key_lst[pg.K_UP]:
         #    sum_mv[1] -= 5
         # if key_lst[pg.K_DOWN]:
@@ -96,24 +120,43 @@ def main():
         #    sum_mv[0] -= 5
         # if key_lst[pg.K_RIGHT]:
         #    sum_mv[0] += 5
-        for key, mv in DELTA.items():
-            if key_lst[key]:
-                sum_mv[0] += mv[0]
-                sum_mv[1] += mv[1]
+
         kk_rct.move_ip(sum_mv)
         if check_bound(kk_rct) != (True, True):
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
         screen.blit(kk_img, kk_rct)
+
+        idx = min(tmr // 500, 9)
+        bb_img = bb_imgs[idx]
+
+        old_center = bb_rct.center 
+        bb_rct = bb_img.get_rect()  # 新しいRectを取得
+        bb_rct.center = old_center  # 中心位置を復元
+
+        avx = vx * bb_accs[idx]
+        avy = vy * bb_accs[idx]
+
+        bb_rct.move_ip(vx, vy)
+        
         yoko, tate = check_bound(bb_rct)
         if not yoko:
             vx *= -1
+        if bb_rct.left < 0:
+                bb_rct.left = 0
+        if bb_rct.right > WIDTH:
+                bb_rct.right = WIDTH
+        
         if not tate:
             vy *= -1
-        bb_rct.move_ip(vx,vy)
+            if bb_rct.top < 0:
+                bb_rct.top = 0
+            if bb_rct.bottom > HEIGHT:
+                bb_rct.bottom = HEIGHT
+
         screen.blit(bb_img, bb_rct)
 
         if kk_rct.colliderect(bb_rct):
-            gameover(screen)  # ゲームオーバー画面表示（機能1）
+            gameover(screen)  # ゲームオーバー画面表示
             return
  
         pg.display.update()
